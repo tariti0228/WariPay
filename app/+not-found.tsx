@@ -1,4 +1,4 @@
-import { Link, Stack } from 'expo-router';
+import { Stack, router } from 'expo-router';
 import React from 'react';
 import { View } from 'react-native';
 import { Button, Surface, Text, useTheme } from 'react-native-paper';
@@ -22,15 +22,14 @@ export default function NotFoundScreen() {
             <Text variant="bodyLarge" style={{ marginBottom: 32, textAlign: 'center', opacity: 0.7 }}>
               お探しの画面は存在しないか、移動した可能性があります。
             </Text>
-            <Link href="/" asChild>
-              <Button
-                mode="contained"
-                contentStyle={{ paddingVertical: 8 }}
-                style={{ minWidth: 200 }}
-              >
-                トップに戻る
-              </Button>
-            </Link>
+            <Button
+              mode="contained"
+              contentStyle={{ paddingVertical: 8 }}
+              style={{ minWidth: 200 }}
+              onPress={() => router.replace('/(tabs)/')}
+            >
+              トップに戻る
+            </Button>
           </View>
         </Surface>
       </SafeAreaView>

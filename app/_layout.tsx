@@ -11,7 +11,7 @@ import { useMigrations } from 'drizzle-orm/expo-sqlite/migrator';
 
 export default function RootLayout() {
   const systemColorScheme = useColorScheme();
-  const [isDarkMode, setIsDarkMode] = useState(systemColorScheme === 'dark');
+  const [isDarkMode, setIsDarkMode] = useState(false);
   const theme = isDarkMode ? customDarkTheme : customLightTheme;
   const toggleTheme = () => setIsDarkMode((prev) => !prev);
 

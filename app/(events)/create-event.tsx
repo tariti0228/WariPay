@@ -1,24 +1,32 @@
 import { createEvent } from '@/src/db/queries/events';
 import { router } from 'expo-router';
 import React, { useState } from 'react';
-import { ScrollView, View } from 'react-native';
-import { Appbar, Button, Card, Chip, Modal, Portal, Text, TextInput, useTheme } from 'react-native-paper';
+import { View, StyleSheet } from 'react-native';
+import { Appbar, Button, Card, Chip, Portal, TextInput, useTheme, Modal } from 'react-native-paper';
+import { Calendar, LocaleConfig } from 'react-native-calendars';
+
+LocaleConfig.locales.jp = {
+  monthNames: ['1月', '2月', '3月', '4月', '5月', '6月', '7月', '8月', '9月', '10月', '11月', '12月'],
+  monthNamesShort: ['1月', '2月', '3月', '4月', '5月', '6月', '7月', '8月', '9月', '10月', '11月', '12月'],
+  dayNames: ['日曜日', '月曜日', '火曜日', '水曜日', '木曜日', '金曜日', '土曜日'],
+  dayNamesShort: ['日', '月', '火', '水', '木', '金', '土'],
+};
+LocaleConfig.defaultLocale = 'jp';
 
 export default function CreateEventScreen() {
   const theme = useTheme();
   const [eventName, setEventName] = useState('');
   const [participants, setParticipants] = useState<string[]>([]);
   const [newParticipant, setNewParticipant] = useState('');
+  const [date, setDate] = useState(new Date());
+  const [showCalendar, setShowCalendar] = useState(false);
   const [tags, setTags] = useState<string[]>([]);
   const [newTag, setNewTag] = useState('');
-  const [isParticipantModalVisible, setIsParticipantModalVisible] = useState(false);
-  const [isTagModalVisible, setIsTagModalVisible] = useState(false);
 
   const handleAddParticipant = () => {
     if (newParticipant.trim()) {
       setParticipants([...participants, newParticipant.trim()]);
       setNewParticipant('');
-      setIsParticipantModalVisible(false);
     }
   };
 
@@ -30,7 +38,6 @@ export default function CreateEventScreen() {
     if (newTag.trim()) {
       setTags([...tags, newTag.trim()]);
       setNewTag('');
-      setIsTagModalVisible(false);
     }
   };
 
@@ -39,15 +46,14 @@ export default function CreateEventScreen() {
   };
 
   const handleCreateEvent = async () => {
-    if (!eventName.trim()) {
-      return;
-    }
+    if (!eventName.trim() || participants.length === 0) return;
 
     try {
       await createEvent({
         name: eventName,
-        tags: tags.join(','),
+        date: date.getTime(),
         participantNames: participants,
+        tags: tags.join(','),
       });
       router.back();
     } catch (error) {
@@ -55,125 +61,192 @@ export default function CreateEventScreen() {
     }
   };
 
+  const formatDate = (date: Date) => {
+    return date.toLocaleDateString('ja-JP', {
+      year: 'numeric',
+      month: 'long',
+      day: 'numeric',
+      weekday: 'long',
+    });
+  };
+
   return (
-    <View style={{ flex: 1, backgroundColor: theme.colors.background }}>
-      <Appbar.Header>
-        <Appbar.BackAction onPress={() => router.back()} />
-        <Appbar.Content title="イベント作成" />
+    <View style={[styles.container, { backgroundColor: theme.colors.background }]}>
+      <Appbar.Header style={{ backgroundColor: theme.colors.surface, elevation: 0 }}>
+        <Appbar.BackAction onPress={() => router.back()} color={theme.colors.onSurface} />
+        <Appbar.Content title="イベント作成" titleStyle={{ color: theme.colors.onSurface }} />
       </Appbar.Header>
 
-      <ScrollView style={{ flex: 1, padding: 16 }}>
-        <Card style={{ marginBottom: 16 }}>
-          <Card.Content>
-            <TextInput
-              label="イベント名"
-              value={eventName}
-              onChangeText={setEventName}
-              mode="outlined"
-              style={{ marginBottom: 16 }}
-            />
-
-            <View style={{ marginBottom: 16 }}>
-              <Text variant="titleMedium" style={{ marginBottom: 8 }}>参加者</Text>
-              <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
-                {participants.map((participant, index) => (
-                  <Chip
-                    key={index}
-                    onClose={() => handleRemoveParticipant(index)}
-                    style={{ marginRight: 8 }}
-                  >
-                    {participant}
-                  </Chip>
-                ))}
-                <Chip
-                  icon="plus"
-                  onPress={() => setIsParticipantModalVisible(true)}
-                >
-                  追加
-                </Chip>
-              </View>
-            </View>
-
-            <View style={{ marginBottom: 16 }}>
-              <Text variant="titleMedium" style={{ marginBottom: 8 }}>タグ</Text>
-              <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
-                {tags.map((tag, index) => (
-                  <Chip
-                    key={index}
-                    onClose={() => handleRemoveTag(index)}
-                    style={{ marginRight: 8 }}
-                  >
-                    {tag}
-                  </Chip>
-                ))}
-                <Chip
-                  icon="plus"
-                  onPress={() => setIsTagModalVisible(true)}
-                >
-                  追加
-                </Chip>
-              </View>
-            </View>
-          </Card.Content>
-        </Card>
-
-        <Button
-          mode="contained"
-          onPress={handleCreateEvent}
-          disabled={!eventName.trim()}
-          style={{ marginTop: 16 }}
-        >
-          イベントを作成
-        </Button>
-      </ScrollView>
-
-      <Portal>
-        <Modal
-          visible={isParticipantModalVisible}
-          onDismiss={() => setIsParticipantModalVisible(false)}
-          contentContainerStyle={{
-            backgroundColor: 'white',
-            padding: 20,
-            margin: 20,
-            borderRadius: 8,
-          }}
-        >
-          <Text variant="titleMedium" style={{ marginBottom: 16 }}>参加者を追加</Text>
+      <Card style={[styles.card, { backgroundColor: theme.colors.surface }]}>
+        <Card.Content style={styles.cardContent}>
           <TextInput
-            label="参加者名"
-            value={newParticipant}
-            onChangeText={setNewParticipant}
+            label="イベント名"
+            value={eventName}
+            onChangeText={setEventName}
             mode="outlined"
-            style={{ marginBottom: 16 }}
+            style={styles.input}
           />
-          <Button mode="contained" onPress={handleAddParticipant}>
-            追加
-          </Button>
-        </Modal>
 
-        <Modal
-          visible={isTagModalVisible}
-          onDismiss={() => setIsTagModalVisible(false)}
-          contentContainerStyle={{
-            backgroundColor: 'white',
-            padding: 20,
-            margin: 20,
-            borderRadius: 8,
-          }}
-        >
-          <Text variant="titleMedium" style={{ marginBottom: 16 }}>タグを追加</Text>
+          <Button
+            mode="outlined"
+            onPress={() => setShowCalendar(true)}
+            style={styles.dateButton}
+            contentStyle={styles.dateButtonContent}
+            icon="calendar"
+          >
+            {formatDate(date)}
+          </Button>
+
           <TextInput
             label="タグ"
             value={newTag}
             onChangeText={setNewTag}
             mode="outlined"
-            style={{ marginBottom: 16 }}
+            style={styles.input}
+            onSubmitEditing={handleAddTag}
+            returnKeyType="done"
+            right={
+              <TextInput.Icon
+                icon="plus"
+                onPress={handleAddTag}
+                disabled={!newTag.trim()}
+              />
+            }
           />
-          <Button mode="contained" onPress={handleAddTag}>
-            追加
-          </Button>
+
+          <View style={styles.tagsContainer}>
+            {tags.map((tag, index) => (
+              <Chip
+                key={index}
+                onClose={() => handleRemoveTag(index)}
+                style={styles.chip}
+                mode="flat"
+              >
+                {tag}
+              </Chip>
+            ))}
+          </View>
+
+          <TextInput
+            label="参加者名"
+            value={newParticipant}
+            onChangeText={setNewParticipant}
+            mode="outlined"
+            style={[styles.input, tags.length > 0 && styles.inputWithMargin]}
+            onSubmitEditing={handleAddParticipant}
+            returnKeyType="done"
+            right={
+              <TextInput.Icon
+                icon="plus"
+                onPress={handleAddParticipant}
+                disabled={!newParticipant.trim()}
+              />
+            }
+          />
+
+          <View style={styles.participantsContainer}>
+            {participants.map((participant, index) => (
+              <Chip
+                key={index}
+                onClose={() => handleRemoveParticipant(index)}
+                style={styles.chip}
+                mode="outlined"
+              >
+                {participant}
+              </Chip>
+            ))}
+          </View>
+        </Card.Content>
+      </Card>
+
+      <Button
+        mode="contained"
+        onPress={handleCreateEvent}
+        disabled={!eventName.trim() || participants.length === 0}
+        style={styles.createButton}
+        contentStyle={styles.createButtonContent}
+      >
+        イベントを作成
+      </Button>
+
+      <Portal>
+        <Modal
+          visible={showCalendar}
+          onDismiss={() => setShowCalendar(false)}
+          contentContainerStyle={styles.calendarContainer}
+        >
+          <Calendar
+            onDayPress={(day) => {
+              setDate(new Date(day.timestamp));
+              setShowCalendar(false);
+            }}
+            markedDates={{
+              [date.toISOString().split('T')[0]]: { selected: true }
+            }}
+            theme={{
+              todayTextColor: theme.colors.primary,
+              selectedDayBackgroundColor: theme.colors.primary,
+            }}
+            firstDay={1}
+          />
         </Modal>
       </Portal>
     </View>
   );
-} 
+}
+
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    padding: 16,
+  },
+  card: {
+    marginBottom: 16,
+    borderRadius: 12,
+  },
+  cardContent: {
+    gap: 16,
+  },
+  input: {
+    height: 56,
+  },
+  inputWithMargin: {
+    marginTop: 8,
+  },
+  dateButton: {
+    height: 56,
+  },
+  dateButtonContent: {
+    height: 56,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  tagsContainer: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 8,
+  },
+  participantsContainer: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 8,
+  },
+  chip: {
+    marginBottom: 8,
+  },
+  createButton: {
+    height: 56,
+    borderRadius: 8,
+  },
+  createButtonContent: {
+    height: 56,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  calendarContainer: {
+    backgroundColor: 'white',
+    padding: 20,
+    margin: 20,
+    borderRadius: 12,
+  },
+}); 

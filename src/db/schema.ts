@@ -5,10 +5,8 @@ import { integer, primaryKey, sqliteTable, text } from 'drizzle-orm/sqlite-core'
 export const events = sqliteTable('events', {
   id: integer('id').primaryKey({ autoIncrement: true }),
   name: text('name').notNull(),
-  date: text('date'),
+  date: integer('date').notNull(),
   tags: text('tags'),
-  createdAt: text('created_at').notNull().default(sql`CURRENT_TIMESTAMP`),
-  updatedAt: text('updated_at').notNull().default(sql`CURRENT_TIMESTAMP`),
 });
 
 export const participants = sqliteTable('participants', {
@@ -22,10 +20,9 @@ export const payments = sqliteTable('payments', {
   amount: integer('amount').notNull(),
   description: text('description'),
   type: text('type'),
+  date: integer('date').notNull(),
   payerId: integer('payer_id').references(() => participants.id).notNull(),
   eventId: integer('event_id').references(() => events.id).notNull(),
-  createdAt: text('created_at').notNull().default(sql`CURRENT_TIMESTAMP`),
-  updatedAt: text('updated_at').notNull().default(sql`CURRENT_TIMESTAMP`),
 });
 
 export const paymentRecipients = sqliteTable(
