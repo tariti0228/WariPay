@@ -21,7 +21,7 @@
 
 1. リポジトリのクローン
 ```bash
-git clone https://github.com/yourusername/WariPay.git
+git clone https://github.com/tariti0228/WariPay.git
 cd WariPay
 ```
 
