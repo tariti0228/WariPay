@@ -1,14 +1,20 @@
-import { getEventById } from '@/src/db/queries/events';
-import { events } from '@/src/db/schema';
+import { events, participants } from '@/src/db/schema';
 import { router, useLocalSearchParams } from 'expo-router';
 import React, { useEffect, useState } from 'react';
 import { ScrollView, View, Share } from 'react-native';
 import { Appbar, Button, Card, Chip, Divider, FAB, Modal, Portal, Text, TextInput, useTheme } from 'react-native-paper';
 import Loading from '@/src/components/Loading';
+import { useSQLiteContext } from 'expo-sqlite';
+import { drizzle } from 'drizzle-orm/expo-sqlite';
+import * as schema from '@/src/db/schema';
+import { eq } from 'drizzle-orm';
+import db from '@/src/db/index';
+
+
 
 type Event = typeof events.$inferSelect & {
   participantNames: string[];
-};1
+};
 
 type Payment = {
   id: number;
@@ -37,9 +43,24 @@ export default function EventDetailScreen() {
     const loadEvent = async () => {
       try {
         setLoading(true);
-        const result = await getEventById(Number(id));
+        const result = await db
+          .select()
+          .from(events)
+          .where(eq(events.id, Number(id)))
+          .then(async (eventResult) => {
+            if (!eventResult[0]) return null;
+
+            const participantsResult = await db
+              .select()
+              .from(participants)
+              .where(eq(participants.eventId, eventResult[0].id));
+
+            return {
+              ...eventResult[0],
+              participantNames: participantsResult.map(p => p.name),
+            };
+          });
         setEvent(result);
-        // TODO: 支払い情報の取得
       } catch (error) {
         console.error('Error loading event:', error);
         setError('イベントの読み込みに失敗しました');

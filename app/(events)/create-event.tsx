@@ -1,9 +1,17 @@
-import { createEvent } from '@/src/db/queries/events';
 import { router } from 'expo-router';
 import React, { useState } from 'react';
 import { View, StyleSheet } from 'react-native';
 import { Appbar, Button, Card, Chip, Portal, TextInput, useTheme, Modal } from 'react-native-paper';
 import { Calendar, LocaleConfig } from 'react-native-calendars';
+
+import { useLiveQuery } from 'drizzle-orm/expo-sqlite';
+import * as schema from '@/src/db/schema';
+import { events, participants } from '@/src/db/schema';
+import { useSQLiteContext } from 'expo-sqlite';
+import { drizzle } from 'drizzle-orm/expo-sqlite';
+import { SQLiteTable } from 'drizzle-orm/sqlite-core';
+import db from '@/src/db/index';
+
 
 LocaleConfig.locales.jp = {
   monthNames: ['1月', '2月', '3月', '4月', '5月', '6月', '7月', '8月', '9月', '10月', '11月', '12月'],
@@ -16,7 +24,7 @@ LocaleConfig.defaultLocale = 'jp';
 export default function CreateEventScreen() {
   const theme = useTheme();
   const [eventName, setEventName] = useState('');
-  const [participants, setParticipants] = useState<string[]>([]);
+  const [participantNames, setParticipantNames] = useState<string[]>([]);
   const [newParticipant, setNewParticipant] = useState('');
   const [date, setDate] = useState(new Date());
   const [showCalendar, setShowCalendar] = useState(false);
@@ -25,13 +33,13 @@ export default function CreateEventScreen() {
 
   const handleAddParticipant = () => {
     if (newParticipant.trim()) {
-      setParticipants([...participants, newParticipant.trim()]);
+      setParticipantNames([...participantNames, newParticipant.trim()]);
       setNewParticipant('');
     }
   };
 
   const handleRemoveParticipant = (index: number) => {
-    setParticipants(participants.filter((_, i) => i !== index));
+    setParticipantNames(participantNames.filter((_, i) => i !== index));
   };
 
   const handleAddTag = () => {
@@ -46,15 +54,31 @@ export default function CreateEventScreen() {
   };
 
   const handleCreateEvent = async () => {
-    if (!eventName.trim() || participants.length === 0) return;
+    if (!eventName.trim() || participantNames.length === 0) return;
 
     try {
-      await createEvent({
-        name: eventName,
-        date: date.getTime(),
-        participantNames: participants,
-        tags: tags.join(','),
+      const result = await db.transaction(async (tx) => {
+        // イベントを作成
+        const [newEvent] = await tx
+          .insert(events)
+          .values({
+            name: eventName,
+            date: date.getTime(),
+            tags: tags.join(','),
+          })
+          .returning();
+
+        // 参加者を作成
+        const participantValues = participantNames.map(name => ({
+          name,
+          eventId: newEvent.id,
+        }));
+
+        await tx.insert(participants).values(participantValues);
+
+        return newEvent;
       });
+
       router.back();
     } catch (error) {
       console.error('Failed to create event:', error);
@@ -145,7 +169,7 @@ export default function CreateEventScreen() {
           />
 
           <View style={styles.participantsContainer}>
-            {participants.map((participant, index) => (
+            {participantNames.map((participant, index) => (
               <Chip
                 key={index}
                 onClose={() => handleRemoveParticipant(index)}
@@ -162,7 +186,7 @@ export default function CreateEventScreen() {
       <Button
         mode="contained"
         onPress={handleCreateEvent}
-        disabled={!eventName.trim() || participants.length === 0}
+        disabled={!eventName.trim() || participantNames.length === 0}
         style={styles.createButton}
         contentStyle={styles.createButtonContent}
       >

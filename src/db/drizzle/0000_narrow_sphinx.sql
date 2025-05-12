@@ -1,10 +1,8 @@
 CREATE TABLE `events` (
 	`id` integer PRIMARY KEY AUTOINCREMENT NOT NULL,
 	`name` text NOT NULL,
-	`date` text,
-	`tags` text,
-	`created_at` text DEFAULT CURRENT_TIMESTAMP NOT NULL,
-	`updated_at` text DEFAULT CURRENT_TIMESTAMP NOT NULL
+	`date` integer NOT NULL,
+	`tags` text
 );
 --> statement-breakpoint
 CREATE TABLE `participants` (
@@ -27,10 +25,9 @@ CREATE TABLE `payments` (
 	`amount` integer NOT NULL,
 	`description` text,
 	`type` text,
+	`date` integer NOT NULL,
 	`payer_id` integer NOT NULL,
 	`event_id` integer NOT NULL,
-	`created_at` text DEFAULT CURRENT_TIMESTAMP NOT NULL,
-	`updated_at` text DEFAULT CURRENT_TIMESTAMP NOT NULL,
 	FOREIGN KEY (`payer_id`) REFERENCES `participants`(`id`) ON UPDATE no action ON DELETE no action,
 	FOREIGN KEY (`event_id`) REFERENCES `events`(`id`) ON UPDATE no action ON DELETE no action
 );

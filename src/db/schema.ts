@@ -1,4 +1,3 @@
-import { sql } from 'drizzle-orm';
 import { integer, primaryKey, sqliteTable, text } from 'drizzle-orm/sqlite-core';
 
 // === Schema Definition ===
@@ -34,4 +33,17 @@ export const paymentRecipients = sqliteTable(
   (table) => [
     primaryKey({ columns: [table.paymentId, table.participantId] })
   ]
-); 
+);
+
+// === Type Exports ===
+export type Event = typeof events.$inferSelect;
+export type NewEvent = typeof events.$inferInsert;
+
+export type Participant = typeof participants.$inferSelect;
+export type NewParticipant = typeof participants.$inferInsert;
+
+export type Payment = typeof payments.$inferSelect;
+export type NewPayment = typeof payments.$inferInsert;
+
+export type PaymentRecipient = typeof paymentRecipients.$inferSelect;
+export type NewPaymentRecipient = typeof paymentRecipients.$inferInsert; 

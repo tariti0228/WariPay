@@ -1,10 +1,14 @@
-import { getEvents } from '@/src/db/queries/events';
 import { router, useFocusEffect } from 'expo-router';
 import React, { useCallback, useEffect, useState } from 'react';
 import { View, StyleSheet, ScrollView, RefreshControl } from 'react-native';
 import { Appbar, Button, Card, Chip, Text, useTheme } from 'react-native-paper';
-import { events } from '@/src/db/schema';
+import { events, participants } from '@/src/db/schema';
 import { InferSelectModel } from 'drizzle-orm';
+import { useSQLiteContext } from 'expo-sqlite';
+import { drizzle } from 'drizzle-orm/expo-sqlite';
+import * as schema from '@/src/db/schema';
+import { eq } from 'drizzle-orm';
+import db from '@/src/db/index';
 
 type Event = InferSelectModel<typeof events> & {
   participantNames: string[];
@@ -19,8 +23,25 @@ export default function EventsScreen() {
   const loadEvents = async () => {
     try {
       setLoading(true);
-      const loadedEvents = await getEvents();
-      setEventsList(loadedEvents);
+      const eventsResult = await db
+        .select()
+        .from(events)
+        .orderBy(events.date);
+
+      const eventsWithParticipants = await Promise.all(
+        eventsResult.map(async (event) => {
+          const participantsResult = await db
+            .select()
+            .from(participants)
+            .where(eq(participants.eventId, event.id));
+          return {
+            ...event,
+            participantNames: participantsResult.map(p => p.name),
+          };
+        })
+      );
+
+      setEventsList(eventsWithParticipants);
     } catch (error) {
       console.error('Failed to load events:', error);
     } finally {
@@ -28,7 +49,6 @@ export default function EventsScreen() {
     }
   };
 
-  // 画面がフォーカスされるたびにイベント一覧を更新
   useFocusEffect(
     useCallback(() => {
       loadEvents();

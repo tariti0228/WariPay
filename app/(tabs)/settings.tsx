@@ -3,7 +3,9 @@ import { router } from 'expo-router';
 import React, { useState } from 'react';
 import { SafeAreaView, ScrollView, Text, View, StyleSheet } from 'react-native';
 import { Card, List, Switch, useTheme, Button, Dialog, Portal, Divider } from 'react-native-paper';
-import { deleteAllEvents } from '@/src/db/queries/events';
+import db from '@/src/db/index';
+import { events, participants, payments, paymentRecipients } from '@/src/db/schema';
+import { eq } from 'drizzle-orm';
 
 export default function SettingsScreen() {
   const theme = useTheme();
@@ -14,7 +16,10 @@ export default function SettingsScreen() {
   const handleDeleteAll = async () => {
     try {
       setIsDeleting(true);
-      await deleteAllEvents();
+      await db.delete(events).execute();
+      await db.delete(participants).execute();
+      await db.delete(payments).execute();
+      await db.delete(paymentRecipients).execute();
       setDeleteDialogVisible(false);
       router.push('/(tabs)');
     } catch (error) {
