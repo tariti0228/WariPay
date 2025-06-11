@@ -37,7 +37,13 @@
       "expo-sqlite"
     ],
     "experiments": {
-      "typedRoutes": true
+      "typedRoutes": true,
+      "tsconfigPaths": true
+    },
+    "extra": {
+      "tamagui": {
+        "config": "./tamagui.config.ts"
+      }
     }
   }
 }

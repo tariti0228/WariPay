@@ -1,15 +1,124 @@
-import { useThemeContext } from '@/src/theme/types';
 import { router } from 'expo-router';
 import React, { useState } from 'react';
-import { SafeAreaView, ScrollView, Text, View, StyleSheet } from 'react-native';
-import { Card, List, Switch, useTheme, Button, Dialog, Portal, Divider } from 'react-native-paper';
-import db from '@/src/db/index';
-import { events, participants, payments, paymentRecipients } from '@/src/db/schema';
-import { eq } from 'drizzle-orm';
+import { SafeAreaView, ScrollView, StyleSheet } from 'react-native';
+import { AlertDialog, Separator, Text, XStack, YStack, Card, Button } from 'tamagui';
+import { db } from '@/db/client';
+import { events, participants, payments, paymentRecipients } from '@/db/schema';
+
+// 型定義
+type SettingItem = {
+  title: string;
+  description?: string;
+  icon: string;
+  onPress?: () => void;
+  showChevron?: boolean;
+};
+
+// 定数
+const APP_VERSION = '1.0.0';
+
+const SETTING_ITEMS: SettingItem[] = [
+  {
+    title: 'プライバシーポリシー',
+    icon: 'shield-lock',
+    onPress: () => router.push('/(settings)/privacy'),
+    showChevron: true,
+  },
+  {
+    title: '利用規約',
+    icon: 'file-document',
+    onPress: () => router.push('/(settings)/terms'),
+    showChevron: true,
+  },
+  {
+    title: 'アプリバージョン',
+    description: APP_VERSION,
+    icon: 'information',
+  },
+];
+
+// コンポーネント
+const SettingItem = ({ item }: { item: SettingItem }) => {
+  return (
+    <YStack>
+      <XStack
+        pressStyle={{ opacity: 0.7 }}
+        onPress={item.onPress}
+      >
+        <XStack gap="$2">
+          <Text fontSize="$6" fontWeight="500">
+            {item.title}
+          </Text>
+          {item.description && (
+            <Text fontSize="$4" opacity={0.7}>
+              {item.description}
+            </Text>
+          )}
+        </XStack>
+        {item.showChevron && (
+          <Text fontSize="$6" opacity={0.5}>
+            →
+          </Text>
+        )}
+      </XStack>
+      {item.showChevron && <Separator />}
+    </YStack>
+  );
+};
+
+const DeleteDialog = ({ 
+  visible, 
+  onDismiss, 
+  onDelete, 
+  isDeleting 
+}: { 
+  visible: boolean; 
+  onDismiss: () => void; 
+  onDelete: () => void; 
+  isDeleting: boolean;
+}) => {
+  return (
+    <AlertDialog open={visible} onOpenChange={onDismiss}>
+      <AlertDialog.Portal>
+        <AlertDialog.Overlay
+          key="overlay"
+          opacity={0.5}
+          enterStyle={{ opacity: 0 }}
+          exitStyle={{ opacity: 0 }}
+        />
+        <AlertDialog.Content
+          bordered
+          elevate
+          key="content"
+          enterStyle={{ x: 0, y: -20, opacity: 0, scale: 0.9 }}
+          exitStyle={{ x: 0, y: 10, opacity: 0, scale: 0.95 }}
+          gap="$4"
+        >
+          <AlertDialog.Title>全データの削除</AlertDialog.Title>
+          <AlertDialog.Description>
+            この操作は取り消せません。本当に全てのデータを削除しますか？
+          </AlertDialog.Description>
+          <XStack gap="$3" style={{ justifyContent: 'flex-end', alignItems: 'center' }}>
+            <AlertDialog.Cancel asChild>
+              <Button>キャンセル</Button>
+            </AlertDialog.Cancel>
+            <AlertDialog.Action asChild>
+              <Button
+                theme="red"
+                onPress={onDelete}
+                disabled={isDeleting}
+              >
+                {isDeleting ? '削除中...' : '削除'}
+              </Button>
+            </AlertDialog.Action>
+          </XStack>
+        </AlertDialog.Content>
+      </AlertDialog.Portal>
+    </AlertDialog>
+  );
+};
 
 export default function SettingsScreen() {
-  const theme = useTheme();
-  const { isDarkMode, toggleTheme } = useThemeContext();
   const [deleteDialogVisible, setDeleteDialogVisible] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
   
@@ -30,102 +139,38 @@ export default function SettingsScreen() {
   };
 
   return (
-    <SafeAreaView style={[styles.container, { backgroundColor: theme.colors.background }]}>
-      <View style={styles.header}>
-        <Text style={[styles.headerText, { color: theme.colors.onSurface }]}>設定</Text>
-      </View>
+    <SafeAreaView style={styles.container}>
+      <YStack style={{ paddingHorizontal: 16, paddingTop: 24 }}>
+        <Text fontSize="$8" fontWeight="bold">設定</Text>
+      </YStack>
 
       <ScrollView style={styles.scrollView}>
-        <Card style={[styles.card, { backgroundColor: theme.colors.surface }]}>
-          <Card.Content>
-            <List.Item
-              title="ダークモード"
-              description="画面を暗いテーマに切り替えます"
-              titleStyle={styles.listItemTitle}
-              descriptionStyle={styles.listItemDescription}
-              left={props => <List.Icon {...props} icon="theme-light-dark" color={theme.colors.primary} />}
-              right={() => (
-                <Switch
-                  value={isDarkMode}
-                  onValueChange={toggleTheme}
-                  color={theme.colors.primary}
-                />
-              )}
-            />
-          </Card.Content>
+        <Card elevate bordered margin="$4">
+          <Card.Header padded>
+            {SETTING_ITEMS.map((item, index) => (
+              <SettingItem key={index} item={item} />
+            ))}
+          </Card.Header>
         </Card>
 
-        <Card style={[styles.card, { backgroundColor: theme.colors.surface }]}>
-          <Card.Content>
-            <List.Item
-              title="プライバシーポリシー"
-              titleStyle={styles.listItemTitle}
-              left={props => <List.Icon {...props} icon="shield-lock" color={theme.colors.primary} />}
-              onPress={() => router.push('/(settings)/privacy')}
-              right={props => <List.Icon {...props} icon="chevron-right" color={theme.colors.primary} />}
-            />
-            <Divider style={styles.divider} />
-            <List.Item
-              title="利用規約"
-              titleStyle={styles.listItemTitle}
-              left={props => <List.Icon {...props} icon="file-document" color={theme.colors.primary} />}
-              onPress={() => router.push('/(settings)/terms')}
-              right={props => <List.Icon {...props} icon="chevron-right" color={theme.colors.primary} />}
-            />
-          </Card.Content>
-        </Card>
-
-        <Card style={[styles.card, { backgroundColor: theme.colors.surface }]}>
-          <Card.Content>
-            <List.Item
-              title="アプリバージョン"
-              description="1.0.0"
-              titleStyle={styles.listItemTitle}
-              descriptionStyle={styles.listItemDescription}
-              left={props => <List.Icon {...props} icon="information" color={theme.colors.primary} />}
-            />
-          </Card.Content>
-        </Card>
-
-        <Card style={[styles.card, { backgroundColor: theme.colors.surface }]}>
-          <Card.Content>
+        <Card elevate bordered margin="$4">
+          <Card.Header padded>
             <Button
-              mode="outlined"
+              theme="red"
               onPress={() => setDeleteDialogVisible(true)}
-              textColor={theme.colors.error}
-              style={[styles.deleteButton, { borderColor: theme.colors.error }]}
             >
               全データを削除
             </Button>
-          </Card.Content>
+          </Card.Header>
         </Card>
       </ScrollView>
 
-      <Portal>
-        <Dialog
-          visible={deleteDialogVisible}
-          onDismiss={() => setDeleteDialogVisible(false)}
-          style={styles.dialog}
-        >
-          <Dialog.Title style={styles.dialogTitle}>全データの削除</Dialog.Title>
-          <Dialog.Content>
-            <Text style={styles.dialogText}>
-              この操作は取り消せません。本当に全てのデータを削除しますか？
-            </Text>
-          </Dialog.Content>
-          <Dialog.Actions>
-            <Button onPress={() => setDeleteDialogVisible(false)}>キャンセル</Button>
-            <Button
-              onPress={handleDeleteAll}
-              textColor={theme.colors.error}
-              loading={isDeleting}
-              disabled={isDeleting}
-            >
-              削除
-            </Button>
-          </Dialog.Actions>
-        </Dialog>
-      </Portal>
+      <DeleteDialog
+        visible={deleteDialogVisible}
+        onDismiss={() => setDeleteDialogVisible(false)}
+        onDelete={handleDeleteAll}
+        isDeleting={isDeleting}
+      />
     </SafeAreaView>
   );
 }
@@ -134,49 +179,8 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
   },
-  header: {
-    padding: 20,
-    paddingTop: 30,
-  },
-  headerText: {
-    fontSize: 32,
-    fontWeight: 'bold',
-  },
   scrollView: {
     flex: 1,
-  },
-  card: {
-    margin: 16,
-    marginTop: 8,
-    marginBottom: 8,
-    elevation: 2,
-    borderRadius: 12,
-  },
-  listItemTitle: {
-    fontSize: 16,
-    fontWeight: '500',
-  },
-  listItemDescription: {
-    fontSize: 14,
-    opacity: 0.7,
-  },
-  divider: {
-    marginVertical: 8,
-  },
-  deleteButton: {
-    marginVertical: 8,
-    borderRadius: 8,
-  },
-  dialog: {
-    borderRadius: 16,
-  },
-  dialogTitle: {
-    fontSize: 20,
-    fontWeight: 'bold',
-  },
-  dialogText: {
-    fontSize: 16,
-    lineHeight: 24,
   },
 });
 

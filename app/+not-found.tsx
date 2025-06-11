@@ -1,38 +1,39 @@
 import { Stack, router } from 'expo-router';
 import React from 'react';
-import { View } from 'react-native';
-import { Button, Surface, Text, useTheme } from 'react-native-paper';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { SafeAreaView } from 'react-native';
+import { YStack, Text, H1, Paragraph, Button, Card } from 'tamagui';
 
 export default function NotFoundScreen() {
-  const theme = useTheme();
-
   return (
     <>
       <Stack.Screen options={{ title: '画面が見つかりません' }} />
-      <SafeAreaView style={{ flex: 1 }}>
-        <Surface style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
-          <View style={{ alignItems: 'center', padding: 20 }}>
-            <Text variant="displayLarge" style={{ color: theme.colors.primary, marginBottom: 16 }}>
-              404
-            </Text>
-            <Text variant="headlineMedium" style={{ marginBottom: 8, textAlign: 'center' }}>
-              画面が見つかりません
-            </Text>
-            <Text variant="bodyLarge" style={{ marginBottom: 32, textAlign: 'center', opacity: 0.7 }}>
-              お探しの画面は存在しないか、移動した可能性があります。
-            </Text>
-            <Button
-              mode="contained"
-              contentStyle={{ paddingVertical: 8 }}
-              style={{ minWidth: 200 }}
-              onPress={() => router.replace('/(tabs)/')}
-            >
-              トップに戻る
-            </Button>
-          </View>
-        </Surface>
+      <SafeAreaView>
+        <YStack
+          flex={1}
+          style={{ padding: 16, gap: 16, alignItems: 'center', justifyContent: 'center' }}
+        >
+          <Card>
+            <Card.Header padded>
+              <H1 color="$red10">404</H1>
+            </Card.Header>
+            <Card.Footer padded>
+              <YStack gap="$2">
+                <Text fontSize="$6" fontWeight="bold">
+                  画面が見つかりません
+                </Text>
+                <Paragraph>
+                  お探しの画面は存在しないか、移動した可能性があります。
+                </Paragraph>
+              </YStack>
+            </Card.Footer>
+          </Card>
+
+          <Button onPress={() => router.push('/')}> 
+            トップに戻る
+          </Button>
+        </YStack>
       </SafeAreaView>
     </>
   );
-} 
+}
+

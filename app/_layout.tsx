@@ -1,73 +1,44 @@
 import { Stack } from 'expo-router';
-import React, { useState,Suspense } from 'react';
-import { Text, useColorScheme, View } from 'react-native';
-import { PaperProvider } from 'react-native-paper';
-import { ActivityIndicator } from 'react-native';
-
-
-import { customDarkTheme, customLightTheme } from '@/src/theme/theme';
-import { ThemeContext } from '@/src/theme/types';
-
-import migrations from '@/src/db/drizzle/migrations';
-import { useMigrations } from 'drizzle-orm/expo-sqlite/migrator';
-import { SQLiteProvider, openDatabaseSync } from 'expo-sqlite';
-import { drizzle } from 'drizzle-orm/expo-sqlite';
-
-export const DATABASE_NAME = 'wari_pay';
+import { TamaguiProvider, Text, YStack } from 'tamagui'
+import { config } from '@/tamagui.config'
+import { useMigrations } from "drizzle-orm/expo-sqlite/migrator";
+import { db } from "@/db/client";
+import migrations from "@/drizzle/migrations";
 
 export default function RootLayout() {
+  const { success, error: migrationError } = useMigrations(db, migrations);
 
-  const expoDb = openDatabaseSync(DATABASE_NAME);  
-  const db = drizzle(expoDb);
-  const { success, error } = useMigrations(db, migrations);
+  if (success) {
+    console.log('データベースを準備しました');
+  }
 
-  const systemColorScheme = useColorScheme();
-  const [isDarkMode, setIsDarkMode] = useState(false);
-  const theme = isDarkMode ? customDarkTheme : customLightTheme;
-  const toggleTheme = () => setIsDarkMode((prev) => !prev);
-
-  
-
-  if (error) {
-    console.error('Migration error:', error.message);
+  if (migrationError) {
+    console.error('Migration error:', migrationError.message);
     return (
-      <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
-        <Text>Migration error: {error.message}</Text>
-      </View>
+      <TamaguiProvider config={config}>
+        <YStack flex={1} justifyContent="center" alignItems="center" padding={16}>
+          <Text color="$red10">データベースエラー: {migrationError.message}</Text>
+        </YStack>
+      </TamaguiProvider>
     );
   }
+
   if (!success) {
+    console.log('データベースを準備中...');
     return (
-      <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
-        <Text>Migration is in progress...</Text>
-      </View>
+      <TamaguiProvider config={config}>
+        <YStack flex={1} justifyContent="center" alignItems="center" padding={16}>
+          <Text>データベースを準備中...</Text>
+        </YStack>
+      </TamaguiProvider>
     );
   }
 
   return (
-    <Suspense fallback={<ActivityIndicator size="large" />}>
-      <SQLiteProvider
-        databaseName={DATABASE_NAME}
-        options={{ enableChangeListener: true }}
-        useSuspense
-      >
-        <ThemeContext.Provider value={{ isDarkMode, toggleTheme }}>
-          <PaperProvider theme={theme}>
-            <Stack screenOptions={{ headerShown: false }}>
-              <Stack.Screen name="(tabs)" />
-              <Stack.Screen
-                name="+not-found"
-                options={{ title: 'ページが見つかりません' }}
-              />
-            </Stack>
-          </PaperProvider>
-        </ThemeContext.Provider>
-      </SQLiteProvider>
-    </Suspense>
+    <TamaguiProvider config={config}>
+      <Stack>
+        <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
+      </Stack>
+    </TamaguiProvider>
   );
-  
 }
-
-
-
-
