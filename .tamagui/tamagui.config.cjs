@@ -30,7 +30,7 @@ var __toCommonJS = (mod) => __copyProps(__defProp({}, "__esModule", { value: tru
 // tamagui.config.ts
 var tamagui_config_exports = {};
 __export(tamagui_config_exports, {
-  default: () => tamagui_config_default
+  config: () => config
 });
 module.exports = __toCommonJS(tamagui_config_exports);
 
@@ -1755,4 +1755,7 @@ var config = createTamagui({
     onlyAllowShorthands: false
   }
 });
-var tamagui_config_default = config;
+// Annotate the CommonJS export names for ESM import in node:
+0 && (module.exports = {
+  config
+});

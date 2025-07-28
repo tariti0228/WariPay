@@ -36,7 +36,7 @@ export default function RootLayout() {
 
   return (
     <TamaguiProvider config={config}>
-      <Stack>
+      <Stack screenOptions={{ headerShown: false }}>
         <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
       </Stack>
     </TamaguiProvider>
