@@ -2,7 +2,7 @@ import { router } from 'expo-router';
 import React from 'react';
 import { ScrollView } from 'react-native';
 import { Text, XStack, YStack, Button } from 'tamagui';
-import { ArrowLeft } from '@tamagui/lucide-icons';
+import { Feather } from '@expo/vector-icons';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 export default function PrivacyPolicyScreen() {
@@ -20,40 +20,32 @@ export default function PrivacyPolicyScreen() {
         borderBottomColor="#f0f0f0"
         elevation={2}
         alignItems="center"
+        justifyContent="center"
+        position="relative"
         height={60}
       >
-        {/* 戻るボタン */}
-        <Button
-          size="$4"
-          icon={ArrowLeft}
-          backgroundColor="#f5f5f5"
-          color="#1a2634"
-          onPress={handleGoBack}
-          width={44}
-          height={44}
-          borderRadius="$2"
+        <XStack
           position="absolute"
-          left="$4"
-          zIndex={10}
-          // タッチ領域を拡大
-          hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
-          // より確実なタッチハンドリング
-          pressStyle={{ opacity: 0.7, scale: 0.95 }}
-        />
-        
-        {/* タイトル（中央揃え） */}
-        <Text 
-          fontSize="$6" 
-          color="#1a2634" 
-          fontWeight="700" 
-          flex={1} 
-          textAlign="center"
+          left={0}
+          top={0}
+          bottom={0}
+          width={80}
+          alignItems="center"
+          justifyContent="center"
         >
+        <Button
+            size="$3"
+            circular
+            icon={<Feather name="arrow-left" size={16} color="#1a2634" />}
+            backgroundColor="#f5f5f5"
+            color="#1a2634"
+            onPress={() => router.back()}
+          />
+          
+        </XStack>
+        <Text fontSize="$6" color="#1a2634" fontWeight="700" flex={1} textAlign="center">
           プライバシーポリシー
         </Text>
-        
-        {/* 右側のスペーサー（レイアウトバランス用） */}
-        <YStack width={44} height={44} />
       </XStack>
 
       <ScrollView style={{ flex: 1 }}>

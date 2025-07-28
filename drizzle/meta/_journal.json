@@ -8,6 +8,27 @@
       "when": 1749558712028,
       "tag": "0000_broken_old_lace",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "6",
+      "when": 1751503420155,
+      "tag": "0001_smart_ultimates",
+      "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "6",
+      "when": 1751505927543,
+      "tag": "0002_swift_spectrum",
+      "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "6",
+      "when": 1751509883350,
+      "tag": "0003_perpetual_prima",
+      "breakpoints": true
     }
   ]
 }

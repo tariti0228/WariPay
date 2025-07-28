@@ -5,8 +5,24 @@ export const events = sqliteTable('events', {
   id: integer('id').primaryKey({ autoIncrement: true }),
   name: text('name').notNull(),
   date: integer('date').notNull(),
-  tags: text('tags'),
+  coverImage: text('cover_image'),
 });
+
+export const categories = sqliteTable('categories', {
+  id: integer('id').primaryKey({ autoIncrement: true }),
+  name: text('name').notNull(),
+});
+
+export const eventCategories = sqliteTable(
+  'event_categories',
+  {
+    eventId: integer('event_id').references(() => events.id).notNull(),
+    categoryId: integer('category_id').references(() => categories.id).notNull(),
+  },
+  (table) => [
+    primaryKey({ columns: [table.eventId, table.categoryId] })
+  ]
+);
 
 export const participants = sqliteTable('participants', {
   id: integer('id').primaryKey({ autoIncrement: true }),
@@ -38,6 +54,12 @@ export const paymentRecipients = sqliteTable(
 // === Type Exports ===
 export type Event = typeof events.$inferSelect;
 export type NewEvent = typeof events.$inferInsert;
+
+export type Category = typeof categories.$inferSelect;
+export type NewCategory = typeof categories.$inferInsert;
+
+export type EventCategory = typeof eventCategories.$inferSelect;
+export type NewEventCategory = typeof eventCategories.$inferInsert;
 
 export type Participant = typeof participants.$inferSelect;
 export type NewParticipant = typeof participants.$inferInsert;

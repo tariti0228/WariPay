@@ -2,7 +2,7 @@ import { router } from 'expo-router';
 import React from 'react';
 import { ScrollView } from 'react-native';
 import { Text, XStack, YStack, Button } from 'tamagui';
-import { ArrowLeft } from '@tamagui/lucide-icons';
+import { Feather } from '@expo/vector-icons';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 export default function TermsScreen() {
@@ -29,18 +29,15 @@ export default function TermsScreen() {
           alignItems="center"
           justifyContent="center"
         >
-          <Button
-            size="$4"
-            icon={ArrowLeft}
+        <Button
+            size="$3"
+            circular
+            icon={<Feather name="arrow-left" size={20} color="#1a2634" />}
             backgroundColor="#f5f5f5"
             color="#1a2634"
             onPress={() => router.back()}
-            width={44}
-            height={44}
-            justifyContent="center"
-            alignItems="center"
-            borderRadius="$2"
           />
+          
         </XStack>
         <Text fontSize="$6" color="#1a2634" fontWeight="700" flex={1} textAlign="center">
           利用規約
